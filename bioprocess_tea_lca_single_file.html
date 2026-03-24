@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bioprocess TEA/LCA Calculator</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      color: #1f2937;
+    }
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .header {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+    h1, h2, h3 { margin-top: 0; }
+    .section {
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .kpi {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 14px;
+      background: #fafafa;
+    }
+    .kpi-title {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+    .kpi-value {
+      font-size: 22px;
+      font-weight: 700;
+    }
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 14px;
+    }
+    .bar-row { margin-bottom: 12px; }
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    .bar-bg {
+      width: 100%;
+      height: 14px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      background: #3b82f6;
+      border-radius: 999px;
+    }
+    .btns {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    button {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 10px;
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button.secondary {
+      background: #64748b;
+    }
+    .note {
+      font-size: 13px;
+      color: #6b7280;
+      line-height: 1.5;
+    }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .form-grid, .kpi-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <h1>Bioprocess TEA / LCA Calculator</h1>
+      <p class="note">A simple single-file browser calculator for screening-level techno-economic analysis and life-cycle assessment of a bioprocess.</p>
+      <div class="btns">
+        <button onclick="resetDefaults()">Reset defaults</button>
+        <button class="secondary" onclick="downloadInputs()">Download inputs</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <div class="card">
+          <h2>Inputs</h2>
+
+          <div class="section">
+            <h3>Project</h3>
+            <div class="form-grid">
+              <div><label>Project name</label><input id="projectName"></div>
+              <div><label>Currency</label><select id="currency"><option>USD</option><option>KRW</option><option>EUR</option></select></div>
+              <div><label>Annual production (ton/y)</label><input id="annualProductionTon" type="number"></div>
+              <div><label>Selling price ($/kg)</label><input id="sellingPricePerKg" type="number" step="any"></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>Finance</h3>
+            <div class="form-grid">
+              <div><label>CAPEX (million)</label><input id="capexMillion" type="number" step="any"></div>
+              <div><label>Fixed OPEX (million/y)</label><input id="fixedOpexMillion" type="number" step="any"></div>
+              <div><label>Labor (million/y)</label><input id="laborMillion" type="number" step="any"></div>
+              <div><label>Maintenance (% of CAPEX)</label><input id="maintenancePctCapex" type="number" step="any"></div>
+              <div><label>Discount rate (%)</label><input id="discountRatePct" type="number" step="any"></div>
+              <div><label>Plant life (years)</label><input id="plantLifeYears" type="number"></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>Process inputs</h3>
+            <div class="form-grid">
+              <div><label>Feedstock cost ($/kg)</label><input id="feedstockCostPerKg" type="number" step="any"></div>
+              <div><label>Feedstock use (kg/kg product)</label><input id="feedstockKgPerKgProduct" type="number" step="any"></div>
+              <div><label>Electricity (kWh/kg)</label><input id="electricityKWhPerKg" type="number" step="any"></div>
+              <div><label>Electricity cost ($/kWh)</label><input id="electricityCostPerKWh" type="number" step="any"></div>
+              <div><label>Steam (kg/kg)</label><input id="steamKgPerKg" type="number" step="any"></div>
+              <div><label>Steam cost ($/kg)</label><input id="steamCostPerKg" type="number" step="any"></div>
+              <div><label>Water (m3/kg)</label><input id="waterM3PerKg" type="number" step="any"></div>
+              <div><label>Water cost ($/m3)</label><input id="waterCostPerM3" type="number" step="any"></div>
+              <div><label>Waste generation (kg/kg)</label><input id="wasteKgPerKgProduct" type="number" step="any"></div>
+              <div><label>Waste treatment ($/kg)</label><input id="wasteCostPerKg" type="number" step="any"></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>LCA factors</h3>
+            <div class="form-grid">
+              <div><label>Direct emissions (kg CO2e/kg)</label><input id="directEmissionsKgCO2ePerKg" type="number" step="any"></div>
+              <div><label>Feedstock EF (kg CO2e/kg feedstock)</label><input id="feedstockEmissionFactor" type="number" step="any"></div>
+              <div><label>Electricity EF (kg CO2e/kWh)</label><input id="electricityEmissionFactor" type="number" step="any"></div>
+              <div><label>Steam EF (kg CO2e/kg steam)</label><input id="steamEmissionFactor" type="number" step="any"></div>
+              <div><label>Water EF (kg CO2e/m3)</label><input id="waterEmissionFactor" type="number" step="any"></div>
+              <div><label>Waste EF (kg CO2e/kg waste)</label><input id="wasteEmissionFactor" type="number" step="any"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2>Key results</h2>
+          <div class="kpi-grid">
+            <div class="kpi"><div class="kpi-title">Minimum selling price</div><div class="kpi-value" id="msp"></div></div>
+            <div class="kpi"><div class="kpi-title">Annual EBITDA</div><div class="kpi-value" id="ebitda"></div></div>
+            <div class="kpi"><div class="kpi-title">Net GHG intensity</div><div class="kpi-value" id="ghg"></div></div>
+            <div class="kpi"><div class="kpi-title">Annual emissions</div><div class="kpi-value" id="annualEmissions"></div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Economic overview</h2>
+          <div id="economicMetrics"></div>
+        </div>
+
+        <div class="card">
+          <h2>Variable cost breakdown</h2>
+          <div id="costBars"></div>
+        </div>
+
+        <div class="card">
+          <h2>GHG contribution breakdown</h2>
+          <div id="ghgBars"></div>
+        </div>
+
+        <div class="card">
+          <h2>Notes</h2>
+          <p class="note">This is a screening-level calculator. It is useful for quick comparisons, but it is not yet a full discounted cash flow model or an ISO-compliant LCA platform.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const defaults = {
+      projectName: 'Bioprocess TEA/LCA Model',
+      currency: 'USD',
+      annualProductionTon: 10000,
+      sellingPricePerKg: 4.5,
+      capexMillion: 25,
+      fixedOpexMillion: 2.5,
+      laborMillion: 1.2,
+      maintenancePctCapex: 3,
+      discountRatePct: 10,
+      plantLifeYears: 15,
+      feedstockCostPerKg: 0.55,
+      feedstockKgPerKgProduct: 2.2,
+      electricityKWhPerKg: 3.8,
+      electricityCostPerKWh: 0.11,
+      steamKgPerKg: 5.5,
+      steamCostPerKg: 0.025,
+      waterM3PerKg: 0.015,
+      waterCostPerM3: 1.2,
+      wasteKgPerKgProduct: 0.25,
+      wasteCostPerKg: 0.08,
+      directEmissionsKgCO2ePerKg: 0.45,
+      feedstockEmissionFactor: 1.6,
+      electricityEmissionFactor: 0.42,
+      steamEmissionFactor: 0.18,
+      waterEmissionFactor: 0.35,
+      wasteEmissionFactor: 0.6
+    };
+
+    function formatNumber(v, d = 2) {
+      return Number(v).toLocaleString(undefined, { maximumFractionDigits: d });
+    }
+
+    function formatCurrency(v, currency) {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency, maximumFractionDigits: 2 }).format(v);
+    }
+
+    function getInputs() {
+      const data = {};
+      Object.keys(defaults).forEach(key => {
+        const el = document.getElementById(key);
+        if (!el) return;
+        data[key] = el.type === 'number' ? Number(el.value) : el.value;
+      });
+      return data;
+    }
+
+    function setInputs(data) {
+      Object.keys(defaults).forEach(key => {
+        const el = document.getElementById(key);
+        if (!el) return;
+        el.value = data[key];
+      });
+    }
+
+    function calculate() {
+      const x = getInputs();
+      const annualKg = x.annualProductionTon * 1000;
+      const maintenanceMillion = (x.maintenancePctCapex / 100) * x.capexMillion;
+
+      const feedstockCost = x.feedstockCostPerKg * x.feedstockKgPerKgProduct;
+      const electricityCost = x.electricityKWhPerKg * x.electricityCostPerKWh;
+      const steamCost = x.steamKgPerKg * x.steamCostPerKg;
+      const waterCost = x.waterM3PerKg * x.waterCostPerM3;
+      const wasteCost = x.wasteKgPerKgProduct * x.wasteCostPerKg;
+      const variableCostPerKg = feedstockCost + electricityCost + steamCost + waterCost + wasteCost;
+
+      const annualVariableCost = variableCostPerKg * annualKg;
+      const annualFixedCost = (x.fixedOpexMillion + x.laborMillion + maintenanceMillion) * 1000000;
+      const annualOpex = annualVariableCost + annualFixedCost;
+      const annualRevenue = x.sellingPricePerKg * annualKg;
+      const annualEBITDA = annualRevenue - annualOpex;
+
+      const r = x.discountRatePct / 100;
+      const n = x.plantLifeYears;
+      const crf = (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+      const annualizedCapex = x.capexMillion * 1000000 * crf;
+      const msp = (annualOpex + annualizedCapex) / annualKg;
+      const grossMargin = annualRevenue > 0 ? (annualEBITDA / annualRevenue) * 100 : 0;
+      const payback = annualEBITDA > 0 ? (x.capexMillion * 1000000) / annualEBITDA : null;
+
+      const lcaFeedstock = x.feedstockKgPerKgProduct * x.feedstockEmissionFactor;
+      const lcaElectricity = x.electricityKWhPerKg * x.electricityEmissionFactor;
+      const lcaSteam = x.steamKgPerKg * x.steamEmissionFactor;
+      const lcaWater = x.waterM3PerKg * x.waterEmissionFactor;
+      const lcaWaste = x.wasteKgPerKgProduct * x.wasteEmissionFactor;
+      const lcaDirect = x.directEmissionsKgCO2ePerKg;
+      const lcaNet = lcaFeedstock + lcaElectricity + lcaSteam + lcaWater + lcaWaste + lcaDirect;
+      const annualCO2eTon = (lcaNet * annualKg) / 1000;
+
+      document.getElementById('msp').textContent = formatCurrency(msp, x.currency) + '/kg';
+      document.getElementById('ebitda').textContent = formatCurrency(annualEBITDA, x.currency) + '/y';
+      document.getElementById('ghg').textContent = formatNumber(lcaNet, 2) + ' kg CO2e/kg';
+      document.getElementById('annualEmissions').textContent = formatNumber(annualCO2eTon, 0) + ' t CO2e/y';
+
+      document.getElementById('economicMetrics').innerHTML = [
+        ['Annual production', formatNumber(annualKg, 0) + ' kg/y'],
+        ['Annual revenue', formatCurrency(annualRevenue, x.currency)],
+        ['Annual OPEX', formatCurrency(annualOpex, x.currency)],
+        ['Annualized CAPEX', formatCurrency(annualizedCapex, x.currency)],
+        ['Gross margin', formatNumber(grossMargin, 1) + '%'],
+        ['Simple payback', payback ? formatNumber(payback, 1) + ' years' : 'Not achieved']
+      ].map(([k, v]) => `<div class="metric-row"><span>${k}</span><strong>${v}</strong></div>`).join('');
+
+      const costData = {
+        Feedstock: feedstockCost,
+        Electricity: electricityCost,
+        Steam: steamCost,
+        Water: waterCost,
+        Waste: wasteCost
+      };
+      renderBars('costBars', costData, '$/kg');
+
+      const ghgData = {
+        Feedstock: lcaFeedstock,
+        Electricity: lcaElectricity,
+        Steam: lcaSteam,
+        Water: lcaWater,
+        Waste: lcaWaste,
+        Direct: lcaDirect
+      };
+      renderBars('ghgBars', ghgData, 'kg CO2e/kg');
+    }
+
+    function renderBars(id, data, unit) {
+      const values = Object.values(data);
+      const max = Math.max(...values, 0.0001);
+      document.getElementById(id).innerHTML = Object.entries(data).map(([k, v]) => {
+        const pct = (v / max) * 100;
+        return `
+          <div class="bar-row">
+            <div class="bar-label"><span>${k}</span><strong>${formatNumber(v, 2)} ${unit}</strong></div>
+            <div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function resetDefaults() {
+      setInputs(defaults);
+      calculate();
+    }
+
+    function downloadInputs() {
+      const blob = new Blob([JSON.stringify(getInputs(), null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'bioprocess_tea_lca_inputs.json';
+      a.click();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      setInputs(defaults);
+      Object.keys(defaults).forEach(key => {
+        const el = document.getElementById(key);
+        if (el) el.addEventListener('input', calculate);
+        if (el && el.tagName === 'SELECT') el.addEventListener('change', calculate);
+      });
+      calculate();
+    });
+  </script>
+</body>
+</html>
